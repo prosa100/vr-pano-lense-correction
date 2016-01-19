@@ -3,19 +3,35 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
+[ExecuteInEditMode]
 public class LensMesh : MonoBehaviour
 {
     public float fov = 235;
     public Func<Vector2, Vector2> lensFunc;
     public float spacingAlg(int x) { return (x + 1) / layers; }
+    public bool needToRegen = false;
 
     public int vertsPerLayer = 10;
     public int layers = 3;
 
+    public Vector2 center = Vector2.one;
+
+    public float imageAspectRatio = 5132f / 2988f;
+    public float activeDiamater = 0.4f;
     // Use this for initialization
-    void Start()
+    void Update()
     {
-        MakeMesh();
+        if (needToRegen)
+        {
+
+            ImgScale.x = activeDiamater;
+            ImgScale.y = activeDiamater * imageAspectRatio;
+            ImgOffset.x = 0.25f + (center.x - ImgScale.x) / 2;
+
+            ImgOffset.y = (center.y - ImgScale.y) / 2;
+            MakeMesh();
+            //needToRegen = false;
+        }
     }
 
     #region Helpers
@@ -37,7 +53,7 @@ public class LensMesh : MonoBehaviour
     }
 
     public Vector2 ImgOffset = Vector2.zero;
-    public Vector2 ImgScale  = Vector2.one;
+    public Vector2 ImgScale = Vector2.one;
 
     static void PrintAll<T>(IEnumerable<T> items)
     {
@@ -48,6 +64,14 @@ public class LensMesh : MonoBehaviour
     }
     #endregion
 
+
+    public FitType fitType = FitType.Fit;
+
+    public enum FitType
+    {
+        Theory, Fit, HackFit
+    }
+
     Vector3 MakeMagicHappen(Vector2 uv)
     {
         var r = uv.magnitude;
@@ -55,7 +79,23 @@ public class LensMesh : MonoBehaviour
         //TODO: Change to match the camera.
 
 
-        var angle = r * fov / 2; //The most important line in the entire program!
+        var angle = float.NaN;
+
+        switch (fitType)
+        {
+            case FitType.Theory:
+                angle = r * fov / 2; //The most important line in the entire program!
+                break;
+            case FitType.Fit:
+                angle = 1.16842f * Mathf.Tan(r) * Mathf.Rad2Deg;
+                break;
+            case FitType.HackFit:
+                angle = 0.301339f * r + 0.891775f * Mathf.Tan(r) * Mathf.Rad2Deg; //Optics should not work this way. Max value is 80...
+                break;
+        }
+
+        //print(angle);
+        //angle = angle < 15?0:90;
 
         //var focalLength = 1e-6f;
         //var angle = Mathf.Atan(r / focalLength);
@@ -107,11 +147,5 @@ public class LensMesh : MonoBehaviour
         m.UploadMeshData(false);
 
         GetComponent<MeshFilter>().sharedMesh = m;
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
     }
 }
