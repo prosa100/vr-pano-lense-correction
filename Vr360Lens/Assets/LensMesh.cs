@@ -102,14 +102,24 @@ public class LensMesh : MonoBehaviour
 
         return Quaternion.Euler(0, 0, -zAngle * Mathf.Rad2Deg) * Quaternion.Euler(0, angle, 0) * Vector3.forward;
     }
-
+    public float defaultDistance;
+    //TODO Should this be based on normal?
+    public float bias = 0.1f;
     void MakeMesh()
     {
         var m = new Mesh();
         var dirs = RangeF(0, 2 * Mathf.PI, vertsPerLayer).Select(t => AngleVector(t) / (layers + 1)).ToArray();
         var verts = Range(layers + 1).SelectMany(l => dirs.Select(d => d * (l + 1))).Concat(new[] { Vector2.zero }).ToArray();
 
-        m.vertices = verts.Select<Vector2, Vector3>(this.MakeMagicHappen).ToArray();
+        m.vertices = verts.Select<Vector2, Vector3>(this.MakeMagicHappen)
+            .Select(v =>
+            {
+                RaycastHit hit;
+                var dist = Physics.Raycast(transform.position, transform.TransformVector(v), out hit)? hit.distance-bias : defaultDistance;
+                return v.normalized * dist;
+            })
+            .ToArray();
+
         m.normals = m.vertices;
         //UV is fliped reltive to cords
         m.uv = verts.Select(v => new Vector2(((v.x + 1) / 2) * ImgScale.x, (1 - ((v.y + 1) / 2)) * ImgScale.y) + ImgOffset).ToArray();
