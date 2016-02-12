@@ -11,6 +11,11 @@ public class LensMesh : MonoBehaviour
     public float spacingAlg(int x) { return (x + 1) / layers; }
     public bool needToRegen = false;
 
+    /*
+    public Vector2 ImageSize = new Vector2(1920, 1080);
+    public float Radius = 935;
+    public Vector2 CenterPoint = new Vector2();
+    */
     public int vertsPerLayer = 10;
     public int layers = 3;
 

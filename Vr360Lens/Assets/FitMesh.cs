@@ -13,6 +13,7 @@ public class FitMesh: MonoBehaviour {
     public Mesh sourceMesh;
     public float bias;
     public float defaultDistance;
+    public float maxDistance = 10;
     Mesh mesh;
 
     //intersection closest to intection along normal ray 
@@ -30,7 +31,7 @@ public class FitMesh: MonoBehaviour {
         {
             var v = sourceVerts[i].normalized;
             RaycastHit hit;
-            var dist = Physics.Raycast(transform.position, transform.TransformVector(v), out hit) ? hit.distance - bias : defaultDistance;
+            var dist = Physics.Raycast(transform.position, transform.TransformVector(v), out hit) ? Mathf.Min(hit.distance, maxDistance) - bias : defaultDistance;
             outVerts[i] = v * dist;
 
         }
